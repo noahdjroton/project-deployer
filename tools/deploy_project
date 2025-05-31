@@ -1,0 +1,20 @@
+#!/bin/bash
+
+PROJECT_NAME=$1
+PORT=$2
+DOMAIN=$3
+DB_NAME=$4
+DB_USER=$5
+DB_PASSWORD=$6
+DB_IP=$7
+
+if [ "$#" -ne 7 ]; then
+    echo "Usage: deploy_project <project_name> <port> <domain> <db_name> <db_user> <db_password> <db_ip>"
+    exit 1
+fi
+
+create_pg_db "$DB_NAME" "$DB_USER" "$DB_PASSWORD" "$DB_IP"
+create_nginx_conf "$PROJECT_NAME" "$PORT" "$DOMAIN"
+systemctl reload nginx
+
+echo "🎉 Déploiement du projet $PROJECT_NAME terminé."

@@ -1,0 +1,16 @@
+#!/bin/bash
+
+DB_NAME=$1
+DB_USER=$2
+DB_PASSWORD=$3
+IP=$4
+
+sudo -u postgres psql -c "CREATE USER $DB_USER WITH PASSWORD '$DB_PASSWORD';"
+sudo -u postgres psql -c "CREATE DATABASE $DB_NAME OWNER $DB_USER;"
+
+PG_HBA="/etc/postgresql/16/main/pg_hba.conf"
+echo "host    $DB_NAME    $DB_USER    $IP/32    scram-sha-256" | sudo tee -a "$PG_HBA"
+echo "hostssl $DB_NAME    $DB_USER    $IP/32    scram-sha-256" | sudo tee -a "$PG_HBA"
+
+sudo systemctl reload postgresql
+echo "✅ Base de données $DB_NAME configurée pour $DB_USER sur $IP"
