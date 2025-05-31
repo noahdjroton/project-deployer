@@ -9,7 +9,6 @@ sudo mkdir -p $TOOLS_DIR
 
 echo "📁 Copie des scripts dans $TOOLS_DIR..."
 sudo cp tools/* $TOOLS_DIR/
-sudo cp templates/* $TOOLS_DIR/
 sudo chmod +x $TOOLS_DIR/*
 
 if ! grep -Fxq "export PATH=\$PATH:$TOOLS_DIR" ~/.bashrc; then
