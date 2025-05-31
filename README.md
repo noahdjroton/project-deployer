@@ -22,3 +22,7 @@ chmod +x install.sh
 ```bash
 deploy_project zenflot 8003 api.zenflot.fr zenflot_db zenflot_admin monmdp 172.26.0.5
 ```
+Installe un certificat SSL avec Certbot (manuellement ou via script) si ce n’est pas encore fait pour le domaine :
+```bash
+sudo certbot --nginx -d api.zenflot.fr
+```

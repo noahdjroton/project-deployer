@@ -1,16 +1,44 @@
 #!/bin/bash
 
+set -e
+
 DB_NAME=$1
 DB_USER=$2
 DB_PASSWORD=$3
-IP=$4
+CONTAINER_IP=$4
 
-sudo -u postgres psql -c "CREATE USER $DB_USER WITH PASSWORD '$DB_PASSWORD';"
-sudo -u postgres psql -c "CREATE DATABASE $DB_NAME OWNER $DB_USER;"
+PG_HBA_FILE="/etc/postgresql/16/main/pg_hba.conf"
 
-PG_HBA="/etc/postgresql/16/main/pg_hba.conf"
-echo "host    $DB_NAME    $DB_USER    $IP/32    scram-sha-256" | sudo tee -a "$PG_HBA"
-echo "hostssl $DB_NAME    $DB_USER    $IP/32    scram-sha-256" | sudo tee -a "$PG_HBA"
+if [[ -z "$DB_NAME" || -z "$DB_USER" || -z "$DB_PASSWORD" || -z "$CONTAINER_IP" ]]; then
+  echo "Usage: create_pg_db <db_name> <db_user> <db_password> <container_ip>"
+  exit 1
+fi
 
+echo "📦 Création de la base de données et de l'utilisateur PostgreSQL..."
+
+# Créer la base et l'utilisateur
+sudo -u postgres psql <<EOF
+CREATE USER $DB_USER WITH PASSWORD '$DB_PASSWORD';
+CREATE DATABASE $DB_NAME OWNER $DB_USER;
+GRANT ALL PRIVILEGES ON DATABASE $DB_NAME TO $DB_USER;
+EOF
+
+echo "🔒 Mise à jour de $PG_HBA_FILE pour $DB_NAME..."
+
+# Nettoyer les lignes reject actuelles si présentes n'importe où
+sudo sed -i '/^host\s\+all\s\+all\s\+0\.0\.0\.0\/0\s\+reject/d' "$PG_HBA_FILE"
+sudo sed -i '/^hostssl\s\+all\s\+all\s\+0\.0\.0\.0\/0\s\+reject/d' "$PG_HBA_FILE"
+
+# Ajouter les nouvelles règles
+echo "host    $DB_NAME    $DB_USER    $CONTAINER_IP/32     scram-sha-256" | sudo tee -a "$PG_HBA_FILE" > /dev/null
+echo "hostssl $DB_NAME    $DB_USER    $CONTAINER_IP/32     scram-sha-256" | sudo tee -a "$PG_HBA_FILE" > /dev/null
+
+# Réajouter les lignes de reject à la fin
+echo "host    all         all         0.0.0.0/0               reject" | sudo tee -a "$PG_HBA_FILE" > /dev/null
+echo "hostssl all         all         0.0.0.0/0               reject" | sudo tee -a "$PG_HBA_FILE" > /dev/null
+
+# Recharger PostgreSQL pour appliquer les changements
+echo "♻️ Rechargement de la configuration PostgreSQL..."
 sudo systemctl reload postgresql
-echo "✅ Base de données $DB_NAME configurée pour $DB_USER sur $IP"
+
+echo "✅ Base $DB_NAME configurée avec succès pour l'utilisateur $DB_USER ($CONTAINER_IP)"
