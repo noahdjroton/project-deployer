@@ -3,9 +3,10 @@
 PROJECT=$1
 PORT=$2
 DOMAIN=$3
+PROJECT_PATH=${4:-"/var/www"}
 TEMPLATE="/opt/project-tools/nginx_template.conf"
 DEST="/etc/nginx/sites-available/$DOMAIN"
 
-sed "s/__PROJECT__/$PROJECT/g; s/__PORT__/$PORT/g; s/__DOMAIN__/$DOMAIN/g" "$TEMPLATE" | sudo tee "$DEST"
+sed "s|__PROJECT__|$PROJECT|g; s|__PORT__|$PORT|g; s|__DOMAIN__|$DOMAIN|g; s|__PROJECT_PATH__|$PROJECT_PATH|g" "$TEMPLATE" | sudo tee "$DEST"
 sudo ln -sf "$DEST" /etc/nginx/sites-enabled/
-echo "✅ Fichier de configuration Nginx créé pour $DOMAIN"
+echo "✅ Fichier de configuration Nginx créé pour $DOMAIN avec le chemin $PROJECT_PATH/$PROJECT"

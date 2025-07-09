@@ -7,14 +7,16 @@ DB_NAME=$4
 DB_USER=$5
 DB_PASSWORD=$6
 DB_IP=$7
+PROJECT_PATH=${8:-"/var/www"}
 
-if [ "$#" -ne 7 ]; then
-    echo "Usage: deploy_project <project_name> <port> <domain> <db_name> <db_user> <db_password> <db_ip>"
+if [ "$#" -lt 7 ] || [ "$#" -gt 8 ]; then
+    echo "Usage: deploy_project <project_name> <port> <domain> <db_name> <db_user> <db_password> <db_ip> [project_path]"
+    echo "project_path est optionnel, par défaut: /var/www"
     exit 1
 fi
 
 create_pg_db "$DB_NAME" "$DB_USER" "$DB_PASSWORD" "$DB_IP"
-create_nginx_conf "$PROJECT_NAME" "$PORT" "$DOMAIN"
+create_nginx_conf "$PROJECT_NAME" "$PORT" "$DOMAIN" "$PROJECT_PATH"
 systemctl reload nginx
 
-echo "🎉 Déploiement du projet $PROJECT_NAME terminé."
+echo "🎉 Déploiement du projet $PROJECT_NAME terminé dans $PROJECT_PATH/$PROJECT_NAME."
